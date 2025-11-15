@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hacker's Todo List</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background-color: #0a0a0a;
+            color: #00ff00;
+            overflow-x: hidden;
+        }
+        
+        .hacker-bg {
+            background: linear-gradient(rgba(10, 10, 10, 0.9), rgba(10, 10, 10, 0.9)), 
+                        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 0, 0, 0.1) 2px, rgba(255, 0, 0, 0.1) 4px);
+        }
+        
+        .glow-red {
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.7), 0 0 20px rgba(255, 0, 0, 0.5);
+        }
+        
+        .glow-green {
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.7), 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+        
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 0, 0, 0.7);
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.9);
+            animation: scan 3s linear infinite;
+            z-index: 10;
+        }
+        
+        @keyframes scan {
+            0% { top: 0%; }
+            100% { top: 100%; }
+        }
+        
+        .terminal-text {
+            color: #00ff00;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+        }
+        
+        .hacker-input {
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 0, 0, 0.5);
+            color: #00ff00;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        
+        .hacker-input:focus {
+            outline: none;
+            border-color: rgba(255, 0, 0, 0.9);
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+        
+        .todo-item {
+            transition: all 0.3s ease;
+            border-left: 3px solid rgba(255, 0, 0, 0.7);
+        }
+        
+        .todo-item:hover {
+            background-color: rgba(255, 0, 0, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .completed {
+            text-decoration: line-through;
+            opacity: 0.7;
+            border-left-color: rgba(0, 255, 0, 0.7);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.1;
+        }
+        
+        .binary-code {
+            position: absolute;
+            color: rgba(0, 255, 0, 0.3);
+            font-size: 14px;
+            animation: fall linear infinite;
+        }
+        
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen hacker-bg">
+    <!-- Matrix-style background animation -->
+    <div class="matrix-bg" id="matrixBg"></div>
+    
+    <!-- Scan line effect -->
+    <div class="scan-line"></div>
+    
+    <div class="container mx-auto px-4 py-8 max-w-2xl">
+        <!-- Header -->
+        <header class="text-center mb-8 fade-in">
+            <h1 class="text-4xl font-bold terminal-text mb-2 glow-red p-4 rounded-lg border border-red-500">
+                <i class="fas fa-terminal mr-2"></i>HACKER'S TODO LIST
+            </h1>
+            <p class="text-lg text-red-400">Secure your tasks. Execute with precision.</p>
+        </header>
+        
+        <!-- Add Todo Form -->
+        <div class="bg-black bg-opacity-70 p-6 rounded-lg border border-red-500 glow-red mb-8 fade-in">
+            <form id="todoForm" class="flex flex-col md:flex-row gap-4">
+                <input 
+                    type="text" 
+                    id="todoInput" 
+                    placeholder="Enter your task..." 
+                    class="hacker-input flex-grow px-4 py-3 rounded-lg"
+                    autocomplete="off"
+                >
+                <button 
+                    type="submit" 
+                    class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold transition duration-300 glow-red"
+                >
+                    <i class="fas fa-plus mr-2"></i>ADD TASK
+                </button>
+            </form>
+        </div>
+        
+        <!-- Stats -->
+        <div class="flex justify-between mb-6 text-sm fade-in">
+            <div class="bg-black bg-opacity-50 p-3 rounded-lg border border-red-500">
+                <span class="text-red-400">Total Tasks: </span>
+                <span id="totalTasks" class="text-green-400 font-bold">0</span>
+            </div>
+            <div class="bg-black bg-opacity-50 p-3 rounded-lg border border-red-500">
+                <span class="text-red-400">Completed: </span>
+                <span id="completedTasks" class="text-green-400 font-bold">0</span>
+            </div>
+            <div class="bg-black bg-opacity-50 p-3 rounded-lg border border-red-500">
+                <span class="text-red-400">Pending: </span>
+                <span id="pendingTasks" class="text-green-400 font-bold">0</span>
+            </div>
+        </div>
+        
+        <!-- Todo List -->
+        <div class="bg-black bg-opacity-70 rounded-lg border border-red-500 glow-red overflow-hidden fade-in">
+            <div class="p-4 border-b border-red-500 bg-red-900 bg-opacity-20">
+                <h2 class="text-xl font-bold terminal-text">
+                    <i class="fas fa-tasks mr-2"></i>ACTIVE TASKS
+                </h2>
+            </div>
+            <ul id="todoList" class="divide-y divide-red-900 divide-opacity-50">
+                <!-- Todo items will be dynamically added here -->
+                <li class="p-4 text-center text-red-400 italic">
+                    No tasks yet. Add a task to get started.
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-4 mt-6 fade-in">
+            <button 
+                id="clearCompleted" 
+                class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 transition duration-300"
+            >
+                <i class="fas fa-trash mr-2"></i>CLEAR COMPLETED
+            </button>
+            <button 
+                id="markAllComplete" 
+                class="bg-green-800 hover:bg-green-700 text-white px-4 py-2 rounded-lg border border-green-600 transition duration-300 glow-green"
+            >
+                <i class="fas fa-check-double mr-2"></i>COMPLETE ALL
+            </button>
+            <button 
+                id="deleteAll" 
+                class="bg-red-800 hover:bg-red-700 text-white px-4 py-2 rounded-lg border border-red-600 transition duration-300 glow-red"
+            >
+                <i class="fas fa-skull-crossbones mr-2"></i>DELETE ALL
+            </button>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="mt-12 text-center text-sm text-red-400">
+            <p>Hacker's Todo List v1.0 | Secure. Efficient. Terminal-based.</p>
+            <p class="mt-2">
+                <span class="inline-block w-3 h-3 bg-red-500 rounded-full mr-1 animate-pulse"></span>
+                System Status: <span class="text-green-400">OPERATIONAL</span>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Matrix background effect
+        function createMatrixBackground() {
+            const matrixBg = document.getElementById('matrixBg');
+            const characters = '01';
+            
+            for (let i = 0; i < 50; i++) {
+                const binaryCode = document.createElement('div');
+                binaryCode.classList.add('binary-code');
+                binaryCode.textContent = Array(20).fill(0).map(() => 
+                    characters.charAt(Math.floor(Math.random() * characters.length))
+                ).join('');
+                
+                binaryCode.style.left = `${Math.random() * 100}%`;
+                binaryCode.style.animationDuration = `${Math.random() * 10 + 10}s`;
+                binaryCode.style.animationDelay = `${Math.random() * 5}s`;
+                
+                matrixBg.appendChild(binaryCode);
+            }
+        }
+        
+        // Todo list functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            createMatrixBackground();
+            
+            const todoForm = document.getElementById('todoForm');
+            const todoInput = document.getElementById('todoInput');
+            const todoList = document.getElementById('todoList');
+            const totalTasks = document.getElementById('totalTasks');
+            const completedTasks = document.getElementById('completedTasks');
+            const pendingTasks = document.getElementById('pendingTasks');
+            const clearCompleted = document.getElementById('clearCompleted');
+            const markAllComplete = document.getElementById('markAllComplete');
+            const deleteAll = document.getElementById('deleteAll');
+            
+            let todos = JSON.parse(localStorage.getItem('hackerTodos')) || [];
+            
+            // Initialize the app
+            renderTodos();
+            updateStats();
+            
+            // Add new todo
+            todoForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const todoText = todoInput.value.trim();
+                
+                if (todoText !== '') {
+                    const newTodo = {
+                        id: Date.now(),
+                        text: todoText,
+                        completed: false,
+                        timestamp: new Date().toLocaleString()
+                    };
+                    
+                    todos.unshift(newTodo);
+                    saveTodos();
+                    renderTodos();
+                    updateStats();
+                    
+                    todoInput.value = '';
+                    
+                    // Add visual feedback
+                    todoInput.classList.add('glow-green');
+                    setTimeout(() => {
+                        todoInput.classList.remove('glow-green');
+                    }, 1000);
+                }
+            });
+            
+            // Clear completed todos
+            clearCompleted.addEventListener('click', function() {
+                if (confirm('Are you sure you want to clear all completed tasks?')) {
+                    todos = todos.filter(todo => !todo.completed);
+                    saveTodos();
+                    renderTodos();
+                    updateStats();
+                }
+            });
+            
+            // Mark all as complete
+            markAllComplete.addEventListener('click', function() {
+                todos.forEach(todo => {
+                    todo.completed = true;
+                });
+                saveTodos();
+                renderTodos();
+                updateStats();
+            });
+            
+            // Delete all todos
+            deleteAll.addEventListener('click', function() {
+                if (confirm('WARNING: This will delete ALL tasks. Are you sure?')) {
+                    todos = [];
+                    saveTodos();
+                    renderTodos();
+                    updateStats();
+                }
+            });
+            
+            // Render todos to the DOM
+            function renderTodos() {
+                if (todos.length === 0) {
+                    todoList.innerHTML = '<li class="p-4 text-center text-red-400 italic">No tasks yet. Add a task to get started.</li>';
+                    return;
+                }
+                
+                todoList.innerHTML = '';
+                
+                todos.forEach(todo => {
+                    const todoItem = document.createElement('li');
+                    todoItem.className = `todo-item p-4 bg-black bg-opacity-50 fade-in ${todo.completed ? 'completed' : ''}`;
+                    
+                    todoItem.innerHTML = `
+                        <div class="flex items-center">
+                            <input 
+                                type="checkbox" 
+                                ${todo.completed ? 'checked' : ''} 
+                                class="h-5 w-5 text-red-500 bg-gray-800 border-red-500 rounded focus:ring-red-400 mr-3"
+                                data-id="${todo.id}"
+                            >
+                            <div class="flex-grow">
+                                <span class="text-green-400">${todo.text}</span>
+                                <div class="text-xs text-red-400 mt-1">Created: ${todo.timestamp}</div>
+                            </div>
+                            <button 
+                                class="text-red-500 hover:text-red-300 ml-2 transition duration-300 delete-btn"
+                                data-id="${todo.id}"
+                            >
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    todoList.appendChild(todoItem);
+                });
+                
+                // Add event listeners to checkboxes and delete buttons
+                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        toggleTodo(id);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        deleteTodo(id);
+                    });
+                });
+            }
+            
+            // Toggle todo completion status
+            function toggleTodo(id) {
+                todos = todos.map(todo => {
+                    if (todo.id === id) {
+                        return { ...todo, completed: !todo.completed };
+                    }
+                    return todo;
+                });
+                
+                saveTodos();
+                updateStats();
+                
+                // Update the specific todo item appearance
+                const todoItem = document.querySelector(`input[data-id="${id}"]`).closest('li');
+                if (todoItem) {
+                    todoItem.classList.toggle('completed');
+                }
+            }
+            
+            // Delete a single todo
+            function deleteTodo(id) {
+                if (confirm('Delete this task?')) {
+                    todos = todos.filter(todo => todo.id !== id);
+                    saveTodos();
+                    renderTodos();
+                    updateStats();
+                }
+            }
+            
+            // Update statistics
+            function updateStats() {
+                const total = todos.length;
+                const completed = todos.filter(todo => todo.completed).length;
+                const pending = total - completed;
+                
+                totalTasks.textContent = total;
+                completedTasks.textContent = completed;
+                pendingTasks.textContent = pending;
+            }
+            
+            // Save todos to localStorage
+            function saveTodos() {
+                localStorage.setItem('hackerTodos', JSON.stringify(todos));
+            }
+            
+            // Add some initial example todos if empty
+            if (todos.length === 0) {
+                const exampleTodos = [
+                    { id: 1, text: "Secure the mainframe", completed: false, timestamp: new Date().toLocaleString() },
+                    { id: 2, text: "Bypass firewall protocols", completed: true, timestamp: new Date().toLocaleString() },
+                    { id: 3, text: "Encrypt sensitive data", completed: false, timestamp: new Date().toLocaleString() }
+                ];
+                
+                todos = exampleTodos;
+                saveTodos();
+                renderTodos();
+                updateStats();
+            }
+        });
+    </script>
+</body>
+</html>
